@@ -30,6 +30,15 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  provider: ^6.1.1
+  #Para el manejo de estado (MVVM)
+  lottie: ^3.1.0
+  #Para animaciones atractivas en el splash
+  google_sign_in: ^6.2.1
+  firebase_auth: ^4.17.8 #Recomendado para gestionar la sesion
+  firebase_core: ^2.27.0
+  geolocator: ^12.0.0
+  cloud_firestore: ^4.15.8
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

@@ -1,8 +1,16 @@
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+    // ESTA LÍNEA ES LA QUE CONECTA EL ARCHIVO JSON CON TU CÓDIGO
+    id("com.google.gms.google-services") 
+    
+}
+dependencies {
+  // Import the Firebase BoM
+  implementation(platform("com.google.firebase:firebase-bom:34.8.0"))
+  implementation("com.google.firebase:firebase-analytics")
+  implementation("com.google.firebase:firebase-firestore")
 }
 
 android {
@@ -16,7 +24,7 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
+        jvmTarget = "17"
     }
 
     defaultConfig {

@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "507643463642",
+    "project_id": "votocontinental",
+    "storage_bucket": "votocontinental.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:507643463642:android:1cde76a68abe4831a0e2e3",
+        "android_client_info": {
+          "package_name": "com.example.app_eleccion_delegado_flutter"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "507643463642-j5o893kes98g15kdvfng768c4a8e1c2t.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.app_eleccion_delegado_flutter",
+            "certificate_hash": "b67e991bfda27981662740bbdec88b39883b141b"
+          }
+        },
+        {
+          "client_id": "507643463642-mqpg16lsid5en4brnj17h4ao94a4jok1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDKRlyjnvMEKVn0EHKfJv67FpPK6g0neG4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "507643463642-mqpg16lsid5en4brnj17h4ao94a4jok1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
