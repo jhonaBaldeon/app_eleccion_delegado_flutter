@@ -27,24 +27,38 @@ class LoginViewModel extends ChangeNotifier {
       if (googleUser != null) {
         // VALIDACIÓN CLAVE: El dominio del correo
         if (googleUser.email.endsWith('@continental.edu.pe')) {
-          // Create UserModel with email
-          _user = UserModel(email: googleUser.email);
+          // Autenticar con Firebase usando Google SignIn
+          final GoogleSignInAuthentication googleAuth =
+              await googleUser.authentication;
+          final AuthCredential credential = GoogleAuthProvider.credential(
+            accessToken: googleAuth.accessToken,
+            idToken: googleAuth.idToken,
+          );
 
-          // Verificar que el usuario esté físicamente en el campus
-          bool isInUniversity = await LocationService().isUserInUniversity();
+          final UserCredential userCredential = await _auth
+              .signInWithCredential(credential);
+          final User? firebaseUser = userCredential.user;
 
-          if (!isInUniversity) {
-            _error = "Debes estar físicamente en el campus para votar.";
+          if (firebaseUser != null) {
+            // Create UserModel with email
+            _user = UserModel(email: googleUser.email);
+
+            // Verificar que el usuario esté físicamente en el campus
+            bool isInUniversity = await LocationService().isUserInUniversity();
+
+            if (!isInUniversity) {
+              _error = "Debes estar físicamente en el campus para votar.";
+              _isLoading = false;
+              notifyListeners();
+              return;
+            }
+
+            // Si es válido y está en la universidad, navegamos a la pantalla de votación
             _isLoading = false;
             notifyListeners();
-            return;
-          }
-
-          // Si es válido y está en la universidad, navegamos a la pantalla de votación
-          _isLoading = false;
-          notifyListeners();
-          if (context.mounted) {
-            Navigator.pushReplacementNamed(context, '/home');
+            if (context.mounted) {
+              Navigator.pushReplacementNamed(context, '/home');
+            }
           }
         } else {
           // Si no es institucional, cerramos sesión y mostramos error
