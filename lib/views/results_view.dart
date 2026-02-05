@@ -9,9 +9,10 @@ class ResultsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color.fromRGBO(245, 243, 255, 1),
       appBar: AppBar(
         title: const Text("Resultados de Votación"),
-        backgroundColor: const Color(0xFFE20613),
+        backgroundColor: const Color.fromRGBO(84, 9, 145, 1),
         foregroundColor: Colors.white,
       ),
       body: Consumer<VotingViewModel>(
@@ -20,7 +21,9 @@ class ResultsScreen extends StatelessWidget {
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(
-                child: CircularProgressIndicator(color: Color(0xFFE20613)),
+                child: CircularProgressIndicator(
+                  color: Color.fromRGBO(84, 9, 145, 1),
+                ),
               );
             }
 
@@ -48,7 +51,7 @@ class ResultsScreen extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFFE20613),
+                              color: Color.fromRGBO(84, 9, 145, 1),
                             ),
                           ),
                           const SizedBox(height: 10),
@@ -92,7 +95,7 @@ class ResultsScreen extends StatelessWidget {
                               children: [
                                 CircleAvatar(
                                   radius: 30,
-                                  backgroundImage: NetworkImage(
+                                  backgroundImage: AssetImage(
                                     candidate.imageUrl,
                                   ),
                                 ),
@@ -127,7 +130,7 @@ class ResultsScreen extends StatelessWidget {
                                       style: const TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 18,
-                                        color: Color(0xFFE20613),
+                                        color: Color.fromRGBO(84, 9, 145, 1),
                                       ),
                                     ),
                                     Text(

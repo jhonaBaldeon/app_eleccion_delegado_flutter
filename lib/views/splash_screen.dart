@@ -25,26 +25,39 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFE20613), // Rojo Continental
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Aquí puedes poner el logo de la Universidad o una animación Lottie
-            const Icon(Icons.school, size: 100, color: Colors.white),
-            const SizedBox(height: 20),
-            const Text(
-              "Elecciones de Delegado",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Imagen de fondo relacionada con elecciones
+          Center(
+            child: Image.asset(
+              'assets/images/election_background.jpg',
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
             ),
-            const SizedBox(height: 10),
-            const CircularProgressIndicator(color: Colors.white),
-          ],
-        ),
+          ),
+          // Capa oscura para mejorar la legibilidad del contenido
+          Container(color: Colors.black.withOpacity(0.6)),
+          // Contenido del splash screen
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  "Elecciones de Delegado",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                const CircularProgressIndicator(color: Colors.white),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

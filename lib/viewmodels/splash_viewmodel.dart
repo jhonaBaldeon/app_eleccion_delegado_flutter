@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../repositories/auth_repository.dart';
 
 class SplashViewModel extends ChangeNotifier {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final AuthRepository _authRepository = AuthRepository();
 
   // Lógica para inicializar la app
   Future<void> initializeApp(BuildContext context) async {
     // Verificar si el usuario ya está logueado
-    User? currentUser = _auth.currentUser;
+    final currentUser = _authRepository.getCurrentUser();
 
     // Simulamos una carga de datos o validación de 2 segundos
     await Future.delayed(const Duration(seconds: 2));

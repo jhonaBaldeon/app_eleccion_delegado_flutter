@@ -7,7 +7,7 @@ class SuccessScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color.fromRGBO(245, 243, 255, 1),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -25,7 +25,7 @@ class SuccessScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFFE20613), // Rojo Continental
+                color: Color.fromRGBO(84, 9, 145, 1), // Morado
               ),
             ),
             const SizedBox(height: 10),
@@ -40,17 +40,17 @@ class SuccessScreen extends StatelessWidget {
             const SizedBox(height: 40),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE20613),
+                backgroundColor: const Color.fromRGBO(84, 9, 145, 1),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 40,
                   vertical: 15,
                 ),
               ),
               onPressed: () {
-                // Volvemos al inicio y limpiamos la ruta
+                // Volvemos a la pantalla principal (home) y limpiamos la ruta
                 Navigator.pushNamedAndRemoveUntil(
                   context,
-                  '/login',
+                  '/home',
                   (route) => false,
                 );
               },

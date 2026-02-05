@@ -33,6 +33,7 @@ dependencies:
   firebase_core: ^2.27.0
   geolocator: ^12.0.0
   cloud_firestore: ^4.15.8
+  flutter_svg: ^2.0.10+1 #Para mostrar imágenes SVG
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -51,6 +52,9 @@ dev_dependencies:
 flutter:
   assets:
     - assets/animations/success.json
+    - assets/logo/logoConti.svg
+    - assets/images/election_background.jpg
+    - assets/candidatos/
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:

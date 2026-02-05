@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../viewmodels/voting_viewmodel.dart';
+import '../viewmodels/login_viewmodel.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -11,9 +14,10 @@ class HomeScreen extends StatelessWidget {
       create: (_) => VotingViewModel(),
       child: Consumer<VotingViewModel>(
         builder: (context, vm, child) => Scaffold(
+          backgroundColor: const Color.fromRGBO(245, 243, 255, 1),
           appBar: AppBar(
             title: const Text("Candidatos Delegado"),
-            backgroundColor: const Color(0xFFE20613),
+            backgroundColor: const Color.fromRGBO(84, 9, 145, 1),
             foregroundColor: Colors.white,
             actions: [
               if (vm.hasVoted)
@@ -29,18 +33,71 @@ class HomeScreen extends StatelessWidget {
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
-                DrawerHeader(
-                  decoration: const BoxDecoration(color: Color(0xFFE20613)),
-                  child: const Center(
-                    child: Text(
-                      "Menu Votación",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
+                Consumer<LoginViewModel>(
+                  builder: (context, loginVm, child) {
+                    return DrawerHeader(
+                      decoration: const BoxDecoration(
+                        color: Color.fromRGBO(84, 9, 145, 1),
                       ),
-                    ),
-                  ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              if (FirebaseAuth.instance.currentUser?.photoURL !=
+                                  null)
+                                CircleAvatar(
+                                  radius: 35,
+                                  backgroundImage: NetworkImage(
+                                    FirebaseAuth
+                                        .instance
+                                        .currentUser!
+                                        .photoURL!,
+                                  ),
+                                )
+                              else
+                                const CircleAvatar(
+                                  radius: 35,
+                                  child: Icon(Icons.person, size: 40),
+                                ),
+                              const SizedBox(width: 15),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      FirebaseAuth
+                                              .instance
+                                              .currentUser
+                                              ?.displayName ??
+                                          'Usuario',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 5),
+                                    Text(
+                                      'Facultad de Ingeniería de Sistemas e Informática',
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 12,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
                 ListTile(
                   leading: const Icon(Icons.how_to_vote),
@@ -64,6 +121,15 @@ class HomeScreen extends StatelessWidget {
                   onTap: () {
                     Navigator.pop(context); // Cerrar el drawer
                     _showClearVotesConfirmation(context, vm);
+                  },
+                ),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(Icons.exit_to_app),
+                  title: const Text("Salir"),
+                  onTap: () {
+                    Navigator.pop(context); // Cerrar el drawer
+                    _handleLogout(context);
                   },
                 ),
               ],
@@ -93,7 +159,7 @@ class HomeScreen extends StatelessWidget {
                           borderRadius: const BorderRadius.vertical(
                             top: Radius.circular(15),
                           ),
-                          child: Image.network(
+                          child: Image.asset(
                             candidate.imageUrl,
                             fit: BoxFit.cover,
                             width: double.infinity,
@@ -118,7 +184,12 @@ class HomeScreen extends StatelessWidget {
                             const SizedBox(height: 8),
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFE20613),
+                                backgroundColor: const Color.fromRGBO(
+                                  84,
+                                  9,
+                                  145,
+                                  1,
+                                ),
                                 foregroundColor: Colors.white,
                               ),
                               onPressed: vm.hasVoted
@@ -167,15 +238,39 @@ class HomeScreen extends StatelessWidget {
               if (dialogContext.mounted) {
                 Navigator.pop(dialogContext);
                 if (success) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Voto registrado con éxito")),
-                  );
+                  Navigator.pushReplacementNamed(context, '/success');
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text("Error al registrar voto")),
                   );
                 }
               }
+            },
+            child: const Text("Confirmar"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _handleLogout(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text("Cerrar Sesión"),
+        content: const Text("¿Estás seguro de cerrar sesión?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text("Cancelar"),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext); // Cerrar el diálogo
+              await Provider.of<LoginViewModel>(
+                context,
+                listen: false,
+              ).signOut(context);
             },
             child: const Text("Confirmar"),
           ),
