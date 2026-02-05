@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/splash_viewmodel.dart';
 
+// Pantalla de splash que se muestra al iniciar la aplicación
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -13,7 +14,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Ejecutamos la lógica de inicialización al cargar la vista
+    // Después de construir el widget, inicializar la app
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<SplashViewModel>(
         context,
@@ -26,26 +27,24 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
-        fit: StackFit.expand,
         children: [
-          // Imagen de fondo relacionada con elecciones
-          Center(
+          // Fondo de imagen de elecciones
+          Positioned.fill(
             child: Image.asset(
               'assets/images/election_background.jpg',
               fit: BoxFit.cover,
-              width: double.infinity,
-              height: double.infinity,
             ),
           ),
-          // Capa oscura para mejorar la legibilidad del contenido
-          Container(color: Colors.black.withOpacity(0.6)),
-          // Contenido del splash screen
+          // Capa de oscurecimiento sobre la imagen
+          Container(color: Colors.black.withValues(alpha: 0.6)),
+          // Contenido centrado
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // Título de elecciones
                 const Text(
-                  "Elecciones de Delegado",
+                  'Elecciones de Delegado',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 24,
@@ -53,6 +52,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   ),
                 ),
                 const SizedBox(height: 10),
+                // Indicador de carga
                 const CircularProgressIndicator(color: Colors.white),
               ],
             ),

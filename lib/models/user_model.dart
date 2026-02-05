@@ -1,12 +1,26 @@
 class UserModel {
   final String email;
+  final String? name;
+  final String? photoUrl;
   final bool isWithinRange;
 
-  UserModel({required this.email, this.isWithinRange = false});
+  UserModel({
+    required this.email,
+    this.name,
+    this.photoUrl,
+    this.isWithinRange = false,
+  });
 
-  UserModel copyWith({String? email, bool? isWithinRange}) {
+  UserModel copyWith({
+    String? email,
+    String? name,
+    String? photoUrl,
+    bool? isWithinRange,
+  }) {
     return UserModel(
       email: email ?? this.email,
+      name: name ?? this.name,
+      photoUrl: photoUrl ?? this.photoUrl,
       isWithinRange: isWithinRange ?? this.isWithinRange,
     );
   }

@@ -1,22 +1,22 @@
 import 'package:geolocator/geolocator.dart';
 
 class LocationService {
-  // Universidad Continental coordinates (example: main campus in Huancayo, Peru)
+  // Coordenadas de la Universidad Continental (ejemplo:campus principal en Huancayo, Peru)
   static const double _universityLatitude =
-      -12.1380; //-12.04802065778313, -75.19865616814968  conti
+      -12.0480; //-12.04802065778313, -75.19865616814968  conti
   static const double _universityLongitude =
-      -75.2223; //-12.138047776312773, -75.22232369203437  casa
+      -75.1986; //-12.138047776312773, -75.22232369203437  casa
   static const double _maxDistanceInMeters =
-      100; // User must be within 100 meters
+      100; // El usuario debe estar a menos de 100 metros.
 
   Future<bool> isUserInUniversity() async {
-    // Check if location services are enabled
+    // Comprueba si los servicios de ubicación están habilitados
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       return false;
     }
 
-    // Check location permission
+    // Verificar permiso de ubicación
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
@@ -29,12 +29,12 @@ class LocationService {
       return false;
     }
 
-    // Get current position
+    // Obtener posición actual
     Position position = await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high,
     );
 
-    // Calculate distance to university
+    // Calcular la distancia a la universidad.
     double distance = Geolocator.distanceBetween(
       position.latitude,
       position.longitude,
@@ -42,7 +42,7 @@ class LocationService {
       _universityLongitude,
     );
 
-    // Return true if user is within the allowed distance
+    // Devuelve verdadero si el usuario está dentro de la distancia permitida
     return distance <= _maxDistanceInMeters;
   }
 }

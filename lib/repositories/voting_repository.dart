@@ -8,28 +8,28 @@ class VotingRepository {
 
   final List<Candidate> _candidates = [
     Candidate(
-      id: "1",
-      name: "Maria Garcia",
-      description: "8vo Ciclo - Innovación Tecnológica",
-      imageUrl: "assets/candidatos/candidate1.png",
+      id: '1',
+      name: 'Maria Garcia',
+      description: '8vo Ciclo - Innovación Tecnológica',
+      imageUrl: 'assets/candidatos/candidate1.png',
     ),
     Candidate(
-      id: "2",
-      name: "Juan Perez",
-      description: "7mo Ciclo - Liderazgo Estudiantil",
-      imageUrl: "assets/candidatos/candidate2.png",
+      id: '2',
+      name: 'Juan Perez',
+      description: '7mo Ciclo - Liderazgo Estudiantil',
+      imageUrl: 'assets/candidatos/candidate2.png',
     ),
     Candidate(
-      id: "3",
-      name: "Ana Rodriguez",
-      description: "9vo Ciclo - Desarrollo de Software",
-      imageUrl: "assets/candidatos/candidate3.png",
+      id: '3',
+      name: 'Ana Rodriguez',
+      description: '9vo Ciclo - Desarrollo de Software',
+      imageUrl: 'assets/candidatos/candidate3.png',
     ),
     Candidate(
-      id: "4",
-      name: "Luis Martinez",
-      description: "6mo Ciclo - Seguridad Informática",
-      imageUrl: "assets/candidatos/candidate4.png",
+      id: '4',
+      name: 'Luis Martinez',
+      description: '6mo Ciclo - Seguridad Informática',
+      imageUrl: 'assets/candidatos/candidate4.png',
     ),
   ];
 
