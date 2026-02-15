@@ -1,10 +1,17 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../models/candidate_model.dart';
 
 class VotingRepository {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  // URL base de la API FastAPI - Configuración según plataforma
+  // URL del backend - PRODUCCIÓN (Render)
+  static const String _baseIp =
+      'https://backend-eleccion-delegado.onrender.com/';
+
+  static String get baseUrl {
+    // Todas las plataformas usan la URL de Render en producción
+    return _baseIp;
+  }
 
   final List<Candidate> _candidates = [
     Candidate(
@@ -35,35 +42,67 @@ class VotingRepository {
 
   List<Candidate> get candidates => _candidates;
 
-  Future<bool> hasUserVoted() async {
-    final userId = _auth.currentUser?.uid;
-    if (userId != null) {
-      final doc = await _firestore.collection('votes').doc(userId).get();
-      return doc.exists;
+  Future<bool> hasUserVoted(String userId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('${baseUrl}voto/verificar/$userId'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['hasVoted'];
+      } else {
+        throw Exception('Error al verificar voto: ${response.statusCode}');
+      }
+    } catch (e) {
+      rethrow;
     }
-    return false;
   }
 
-  Future<bool> castVote(String candidateId) async {
-    final user = _auth.currentUser;
-    if (user == null) {
-      throw Exception('No hay usuario autenticado');
-    }
-
+  Future<bool> castVote(
+    String candidateId,
+    String userEmail,
+    String userId,
+  ) async {
     try {
-      final hasVoted = await hasUserVoted();
-      if (hasVoted) {
-        throw Exception('Usuario ya ha votado');
-      }
+      final url = '${baseUrl}voto/registrar';
 
-      await _firestore.collection('votes').doc(user.uid).set({
+      final body = json.encode({
         'candidateId': candidateId,
-        'userEmail': user.email,
-        'votedAt': FieldValue.serverTimestamp(),
+        'userEmail': userEmail,
+        'uid': userId,
       });
 
-      return true;
+      final response = await http
+          .post(
+            Uri.parse(url),
+            headers: {'Content-Type': 'application/json'},
+            body: body,
+          )
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        return true;
+      } else if (response.statusCode == 400) {
+        final data = json.decode(response.body);
+        throw Exception(data['detail'] ?? 'Error desconocido del servidor');
+      } else if (response.statusCode == 422) {
+        final data = json.decode(response.body);
+        throw Exception('Error de validación: ${data['detail']}');
+      } else {
+        throw Exception(
+          'Error al registrar voto: ${response.statusCode} - ${response.body}',
+        );
+      }
     } catch (e) {
+      if (e.toString().contains('SocketException') ||
+          e.toString().contains('Connection refused')) {
+        throw Exception(
+          'No se puede conectar al servidor. Verifica que el backend esté corriendo y que el dispositivo esté en la misma red.',
+        );
+      } else if (e.toString().contains('TimeoutException')) {
+        throw Exception('Tiempo de espera agotado. El servidor no responde.');
+      }
       rethrow;
     }
   }
@@ -72,22 +111,26 @@ class VotingRepository {
     final Map<String, int> results = {};
 
     try {
+      // Inicializar resultados con 0 votos
       for (final candidate in _candidates) {
         results[candidate.id] = 0;
       }
 
-      final snapshot = await _firestore.collection('votes').get();
+      final response = await http.get(Uri.parse('${baseUrl}voto/resultados'));
 
-      for (final doc in snapshot.docs) {
-        final data = doc.data();
-        final candidateId = data['candidateId'] as String;
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
 
-        if (results.containsKey(candidateId)) {
-          results[candidateId] = results[candidateId]! + 1;
+        for (final item in data) {
+          if (results.containsKey(item['candidateId'])) {
+            results[item['candidateId']] = item['votes'];
+          }
         }
-      }
 
-      return results;
+        return results;
+      } else {
+        throw Exception('Error al obtener resultados: ${response.statusCode}');
+      }
     } catch (e) {
       rethrow;
     }
@@ -95,13 +138,13 @@ class VotingRepository {
 
   Future<bool> clearVotes() async {
     try {
-      final snapshot = await _firestore.collection('votes').get();
+      final response = await http.delete(Uri.parse('${baseUrl}voto/limpiar'));
 
-      for (final doc in snapshot.docs) {
-        await doc.reference.delete();
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        throw Exception('Error al limpiar votos: ${response.statusCode}');
       }
-
-      return true;
     } catch (e) {
       rethrow;
     }

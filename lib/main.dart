@@ -44,7 +44,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => SplashViewModel()),
         // ViewModel para autenticación y login
         ChangeNotifierProvider(create: (_) => LoginViewModel()),
-        // ViewModel para gestión de votos y candidatos
+        // ViewModel para gestión de votos - se creará dinámicamente en HomeScreen
         ChangeNotifierProvider(create: (_) => VotingViewModel()),
       ],
       child: MaterialApp(

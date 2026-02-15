@@ -1,6 +1,6 @@
 class UserModel {
   final String email;
-  final String? name;
+  final String? name; //el signo ? quiere decir que la peticion del atributo es opcional.
   final String? photoUrl;
   final bool isWithinRange;
 

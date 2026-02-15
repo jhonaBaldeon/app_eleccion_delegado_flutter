@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -7,8 +8,26 @@ import '../viewmodels/voting_viewmodel.dart';
 import '../viewmodels/login_viewmodel.dart';
 
 // Pantalla principal que muestra los candidatos
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Inicializar el VotingViewModel con los datos del usuario actual
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final vm = Provider.of<VotingViewModel>(context, listen: false);
+        vm.setUserInfo(userId: user.uid, userEmail: user.email);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,6 +71,12 @@ class HomeScreen extends StatelessWidget {
                     // Usar Firebase como principal, Google como respaldo
                     final photoUrl = firebasePhotoUrl ?? googlePhotoUrl;
 
+                    // Obtener nombre para iniciales
+                    final userName =
+                        loginVm.user?.name ??
+                        FirebaseAuth.instance.currentUser?.displayName ??
+                        'Usuario';
+
                     return DrawerHeader(
                       decoration: const BoxDecoration(
                         color: Color.fromRGBO(84, 9, 145, 1),
@@ -61,56 +86,8 @@ class HomeScreen extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              FutureBuilder<String?>(
-                                future: Future.value(photoUrl),
-                                builder: (context, snapshot) {
-                                  final url = snapshot.data;
-                                  if (url != null && url.isNotEmpty) {
-                                    return Container(
-                                      width: 70,
-                                      height: 70,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: Colors.grey[300],
-                                      ),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(35),
-                                        child: Image.network(
-                                          url,
-                                          width: 70,
-                                          height: 70,
-                                          fit: BoxFit.cover,
-                                          loadingBuilder:
-                                              (context, child, progress) {
-                                                if (progress == null) {
-                                                  return child;
-                                                }
-                                                return const Center(
-                                                  child:
-                                                      CircularProgressIndicator(
-                                                        color: Colors.white,
-                                                      ),
-                                                );
-                                              },
-                                          errorBuilder:
-                                              (context, error, stack) {
-                                                return const Icon(
-                                                  Icons.person,
-                                                  size: 40,
-                                                  color: Colors.white,
-                                                );
-                                              },
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                  return const CircleAvatar(
-                                    radius: 35,
-                                    backgroundColor: Colors.white24,
-                                    child: Icon(Icons.person, size: 40),
-                                  );
-                                },
-                              ),
+                              // Widget de foto de perfil con manejo especial para web
+                              _buildProfileImage(photoUrl, userName),
                               const SizedBox(width: 15),
                               Expanded(
                                 child: Column(
@@ -166,14 +143,33 @@ class HomeScreen extends StatelessWidget {
                     Navigator.pushNamed(context, '/results');
                   },
                 ),
-                ListTile(
-                  leading: const Icon(Icons.delete_sweep),
-                  title: const Text('Limpiar Votos'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _showClearVotesConfirmation(context, vm);
-                  },
-                ),
+                // Toggle de modo administrador (solo visible para el admin)
+                if (vm.isAdmin)
+                  ListTile(
+                    leading: const Icon(Icons.admin_panel_settings),
+                    title: const Text('Modo Admin'),
+                    trailing: Switch(
+                      value: vm.showAdminOptions,
+                      onChanged: (value) {
+                        vm.toggleAdminOptions();
+                        // No cerramos el drawer para que el usuario vea el cambio
+                      },
+                      activeThumbColor: const Color.fromRGBO(84, 9, 145, 1),
+                    ),
+                  ),
+                // Limpiar Votos solo visible si es admin Y el toggle está activado
+                if (vm.isAdmin && vm.showAdminOptions)
+                  ListTile(
+                    leading: const Icon(Icons.delete_sweep, color: Colors.red),
+                    title: const Text(
+                      'Limpiar Votos',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showClearVotesConfirmation(context, vm);
+                    },
+                  ),
                 const Divider(),
                 ListTile(
                   leading: const Icon(Icons.exit_to_app),
@@ -289,9 +285,10 @@ class HomeScreen extends StatelessWidget {
                 if (success) {
                   Navigator.pushReplacementNamed(context, '/success');
                 } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Error al registrar voto')),
-                  );
+                  final errorMsg = vm.errorMessage ?? 'Error al registrar voto';
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text(errorMsg)));
                 }
               }
             },
@@ -361,6 +358,120 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  // Método para construir la imagen de perfil según la plataforma
+  Widget _buildProfileImage(String? photoUrl, String userName) {
+    // Obtener iniciales del nombre
+    String initials = '';
+    final nameParts = userName.split(' ');
+    if (nameParts.isNotEmpty && nameParts[0].isNotEmpty) {
+      initials = nameParts[0][0].toUpperCase();
+      if (nameParts.length > 1 && nameParts[1].isNotEmpty) {
+        initials += nameParts[1][0].toUpperCase();
+      }
+    }
+
+    if (initials.isEmpty) initials = 'U';
+
+    // En web, las imágenes de Google tienen restricciones CORS
+    // Usamos un avatar con iniciales como solución alternativa
+    if (kIsWeb) {
+      // Intentar cargar la imagen, pero si falla mostrar avatar con iniciales
+      if (photoUrl != null && photoUrl.isNotEmpty) {
+        return Container(
+          width: 70,
+          height: 70,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.grey[300],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(35),
+            child: Image.network(
+              photoUrl,
+              width: 70,
+              height: 70,
+              fit: BoxFit.cover,
+              // Configuración especial para web
+              headers: const {'Access-Control-Allow-Origin': '*'},
+              loadingBuilder: (context, child, progress) {
+                if (progress == null) return child;
+                return const Center(
+                  child: CircularProgressIndicator(color: Colors.white),
+                );
+              },
+              errorBuilder: (context, error, stack) {
+                // Si falla la carga, mostrar avatar con iniciales
+                return CircleAvatar(
+                  radius: 35,
+                  backgroundColor: Colors.white,
+                  child: Text(
+                    initials,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Color.fromRGBO(84, 9, 145, 1),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      }
+
+      // Si no hay URL, mostrar avatar con iniciales directamente
+      return CircleAvatar(
+        radius: 35,
+        backgroundColor: Colors.white,
+        child: Text(
+          initials,
+          style: const TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Color.fromRGBO(84, 9, 145, 1),
+          ),
+        ),
+      );
+    }
+
+    // En móvil (Android/iOS), usar Image.network como antes
+    if (photoUrl != null && photoUrl.isNotEmpty) {
+      return Container(
+        width: 70,
+        height: 70,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.grey[300],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(35),
+          child: Image.network(
+            photoUrl,
+            width: 70,
+            height: 70,
+            fit: BoxFit.cover,
+            loadingBuilder: (context, child, progress) {
+              if (progress == null) return child;
+              return const Center(
+                child: CircularProgressIndicator(color: Colors.white),
+              );
+            },
+            errorBuilder: (context, error, stack) {
+              return const Icon(Icons.person, size: 40, color: Colors.white);
+            },
+          ),
+        ),
+      );
+    }
+
+    // Si no hay URL en móvil, mostrar icono genérico
+    return const CircleAvatar(
+      radius: 35,
+      backgroundColor: Colors.white24,
+      child: Icon(Icons.person, size: 40),
     );
   }
 }
