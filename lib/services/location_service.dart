@@ -3,9 +3,9 @@ import 'package:geolocator/geolocator.dart';
 class LocationService {
   // Coordenadas de la Universidad Continental (ejemplo:campus principal en Huancayo, Peru)
   static const double _universityLatitude =
-      -12.138047776312773; //-12.04802065778313, -75.19865616814968  conti
+      -12.04802065778313; //-12.04802065778313, -75.19865616814968  conti
   static const double _universityLongitude =
-      -75.22232369203437; //-12.138047776312773, -75.22232369203437  casa
+      -75.19865616814968; //-12.138047776312773, -75.22232369203437  casa
   static const double _maxDistanceInMeters =
       100; // El usuario debe estar a menos de 100 metros.
 
