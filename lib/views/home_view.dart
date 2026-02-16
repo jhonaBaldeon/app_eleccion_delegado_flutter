@@ -267,34 +267,59 @@ class _HomeScreenState extends State<HomeScreen> {
     String name,
     String id,
   ) {
+    bool isLoading = false;
+
     showDialog(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Confirmar Voto'),
-        content: Text('¿Estás seguro de votar por $name?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () async {
-              final success = await vm.castVote(id);
-              if (dialogContext.mounted) {
-                Navigator.pop(dialogContext);
-                if (success) {
-                  Navigator.pushReplacementNamed(context, '/success');
-                } else {
-                  final errorMsg = vm.errorMessage ?? 'Error al registrar voto';
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text(errorMsg)));
-                }
-              }
-            },
-            child: const Text('Confirmar'),
-          ),
-        ],
+      barrierDismissible: !isLoading,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Confirmar Voto'),
+          content: isLoading
+              ? const Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
+                    Text('Conectando con el servidor...'),
+                    SizedBox(height: 8),
+                    Text(
+                      'Esto puede tomar unos segundos',
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
+                )
+              : Text('¿Estás seguro de votar por $name?'),
+          actions: isLoading
+              ? []
+              : [
+                  TextButton(
+                    onPressed: () => Navigator.pop(dialogContext),
+                    child: const Text('Cancelar'),
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      setState(() => isLoading = true);
+
+                      final success = await vm.castVote(id);
+
+                      if (dialogContext.mounted) {
+                        Navigator.pop(dialogContext);
+                        if (success) {
+                          Navigator.pushReplacementNamed(context, '/success');
+                        } else {
+                          final errorMsg =
+                              vm.errorMessage ?? 'Error al registrar voto';
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(errorMsg)),
+                          );
+                        }
+                      }
+                    },
+                    child: const Text('Confirmar'),
+                  ),
+                ],
+        ),
       ),
     );
   }

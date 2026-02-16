@@ -48,14 +48,28 @@ class VotingViewModel extends ChangeNotifier {
   // Verificar si el usuario ya votó en FastAPI
   Future<void> _checkIfUserHasVoted() async {
     if (_userId == null) return;
-    _hasVoted = await _votingRepository.hasUserVoted(_userId!);
-    notifyListeners();
+    try {
+      // Despertar servidor primero (para Render free tier)
+      await _votingRepository.wakeUpServer();
+      _hasVoted = await _votingRepository.hasUserVoted(_userId!);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error al verificar voto: $e');
+      // No mostrar error al usuario, solo asumir que no ha votado
+      _hasVoted = false;
+      notifyListeners();
+    }
+  }
+
+  // Despertar el servidor (para Render free tier)
+  Future<bool> wakeUpServer() async {
+    return await _votingRepository.wakeUpServer();
   }
 
   // Emitir voto por un candidato
   Future<bool> castVote(String candidateId) async {
     _errorMessage = null;
-    
+
     if (_userId == null || _userEmail == null) {
       _errorMessage = 'Error: No se ha proporcionado información del usuario';
       debugPrint(_errorMessage);
@@ -64,6 +78,10 @@ class VotingViewModel extends ChangeNotifier {
     }
 
     try {
+      // Intentar despertar el servidor primero
+      debugPrint('Despertando servidor antes de votar...');
+      await _votingRepository.wakeUpServer();
+
       final success = await _votingRepository.castVote(
         candidateId,
         _userEmail!,

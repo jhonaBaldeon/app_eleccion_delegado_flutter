@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:async';
 import '../models/candidate_model.dart';
 
 class VotingRepository {
@@ -59,52 +61,87 @@ class VotingRepository {
     }
   }
 
+  // Método para despertar el servidor (útil para Render free tier)
+  Future<bool> wakeUpServer() async {
+    try {
+      debugPrint('Despertando servidor...');
+      final response = await http
+          .get(Uri.parse('${baseUrl}health'))
+          .timeout(const Duration(seconds: 30));
+      debugPrint('Servidor despierto: ${response.statusCode}');
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Error al despertar servidor: $e');
+      return false;
+    }
+  }
+
   Future<bool> castVote(
     String candidateId,
     String userEmail,
     String userId,
   ) async {
-    try {
-      final url = '${baseUrl}voto/registrar';
+    final url = '${baseUrl}voto/registrar';
 
-      final body = json.encode({
-        'candidateId': candidateId,
-        'userEmail': userEmail,
-        'uid': userId,
-      });
+    final body = json.encode({
+      'candidateId': candidateId,
+      'userEmail': userEmail,
+      'uid': userId,
+    });
 
-      final response = await http
-          .post(
-            Uri.parse(url),
-            headers: {'Content-Type': 'application/json'},
-            body: body,
-          )
-          .timeout(const Duration(seconds: 10));
+    // Intentar la petición con reintentos para manejar cold start de Render
+    int maxRetries = 3;
+    for (int attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        debugPrint('Intento $attempt de $maxRetries...');
 
-      if (response.statusCode == 200) {
-        return true;
-      } else if (response.statusCode == 400) {
-        final data = json.decode(response.body);
-        throw Exception(data['detail'] ?? 'Error desconocido del servidor');
-      } else if (response.statusCode == 422) {
-        final data = json.decode(response.body);
-        throw Exception('Error de validación: ${data['detail']}');
-      } else {
-        throw Exception(
-          'Error al registrar voto: ${response.statusCode} - ${response.body}',
-        );
+        final response = await http
+            .post(
+              Uri.parse(url),
+              headers: {'Content-Type': 'application/json'},
+              body: body,
+            )
+            .timeout(const Duration(seconds: 45)); // Aumentado a 45 segundos
+
+        if (response.statusCode == 200) {
+          return true;
+        } else if (response.statusCode == 400) {
+          final data = json.decode(response.body);
+          throw Exception(data['detail'] ?? 'Error desconocido del servidor');
+        } else if (response.statusCode == 422) {
+          final data = json.decode(response.body);
+          throw Exception('Error de validación: ${data['detail']}');
+        } else {
+          throw Exception(
+            'Error al registrar voto: ${response.statusCode} - ${response.body}',
+          );
+        }
+      } on TimeoutException catch (_) {
+        if (attempt == maxRetries) {
+          throw Exception(
+            'El servidor está despertando (cold start). Por favor, intenta de nuevo en unos segundos.',
+          );
+        }
+        // Esperar antes de reintentar
+        debugPrint('Timeout, esperando 3 segundos antes de reintentar...');
+        await Future.delayed(const Duration(seconds: 3));
+      } catch (e) {
+        if (e.toString().contains('SocketException') ||
+            e.toString().contains('Connection refused')) {
+          throw Exception(
+            'No se puede conectar al servidor. Verifica tu conexión a internet.',
+          );
+        }
+        // Para otros errores, reintentar si no es el último intento
+        if (attempt == maxRetries) {
+          rethrow;
+        }
+        debugPrint('Error en intento $attempt: $e');
+        await Future.delayed(const Duration(seconds: 2));
       }
-    } catch (e) {
-      if (e.toString().contains('SocketException') ||
-          e.toString().contains('Connection refused')) {
-        throw Exception(
-          'No se puede conectar al servidor. Verifica que el backend esté corriendo y que el dispositivo esté en la misma red.',
-        );
-      } else if (e.toString().contains('TimeoutException')) {
-        throw Exception('Tiempo de espera agotado. El servidor no responde.');
-      }
-      rethrow;
     }
+
+    return false;
   }
 
   Future<Map<String, int>> getResults() async {
